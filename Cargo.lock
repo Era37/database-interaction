@@ -674,6 +674,7 @@ dependencies = [
  "async-std",
  "mongodb",
  "redis",
+ "tokio",
 ]
 
 [[package]]

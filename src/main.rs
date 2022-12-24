@@ -1,13 +1,23 @@
-use actix_web::{self, error::HttpError};
-use async_std;
-use mongodb::{error::Error, options::ClientOptions, Client};
-use redis;
+use async_std::task;
+use mongodb::Client;
+use tokio;
+use utils::mongo_connect;
+mod utils;
 
-struct DbConn {}
+struct DbConn {
+    mongo_conn: Client,
+}
 
-async fn db_connect() -> Result<(), Error> {
-    let mongo_options = ClientOptions::parse("mongodb://0.0.0.0:27017").await?;
-    let client = Client::with_options(mongo_options)?;
+impl DbConn {
+    fn new() -> Result<DbConn, Box<dyn std::error::Error>> {
+        let client = task::block_on(mongo_connect())?;
+        Ok(DbConn { mongo_conn: client })
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let conn: DbConn = DbConn::new()?;
+    println!("{:?}", conn.mongo_conn);
     Ok(())
 }
-fn main() {}
