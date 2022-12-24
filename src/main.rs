@@ -1,23 +1,18 @@
-use async_std::task;
-use mongodb::Client;
-use tokio;
-use utils::mongo_connect;
+use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use std::io::{Error, ErrorKind::Other, Result};
+use utils::DbConn;
 mod utils;
 
-struct DbConn {
-    mongo_conn: Client,
+#[get("/")]
+async fn my_test() -> impl Responder {
+    HttpResponse::Ok().body("Hello world!")
 }
 
-impl DbConn {
-    fn new() -> Result<DbConn, Box<dyn std::error::Error>> {
-        let client = task::block_on(mongo_connect())?;
-        Ok(DbConn { mongo_conn: client })
-    }
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let conn: DbConn = DbConn::new()?;
-    println!("{:?}", conn.mongo_conn);
-    Ok(())
+#[actix_web::main]
+async fn main() -> Result<()> {
+    DbConn::new().map_err(|e| Error::new(Other, e))?;
+    HttpServer::new(|| App::new().service(my_test))
+        .bind(("127.0.0.1", 8080))?
+        .run()
+        .await
 }
