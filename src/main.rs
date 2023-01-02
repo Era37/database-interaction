@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
 use dotenvy;
 use mongodb::{Client, Database};
@@ -22,9 +23,14 @@ async fn main() -> Result<()> {
     let db = client.database("ChatLogs");
     println!("Server Online");
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_header()
+            .allow_any_method()
+            .allow_any_origin();
         App::new()
             .app_data(web::Data::new(db.clone()))
             .service(database_append)
+            .wrap(cors)
     })
     .bind(("0.0.0.0", 8080))?
     .run()

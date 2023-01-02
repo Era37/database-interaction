@@ -1,0 +1,7 @@
+services:
+  app:
+    container_name: database_interaction
+    build: ./.
+    env_file:
+      - ./.env
+    
