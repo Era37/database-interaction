@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
             .service(database_append)
             .wrap(cors)
     })
-    .bind(("0.0.0.0", 8080))?
+    .bind(("0.0.0.0", 80))?
     .run()
     .await
 }
