@@ -1,18 +1,32 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
-use std::io::{Error, ErrorKind::Other, Result};
-use utils::DbConn;
+use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
+use dotenvy;
+use mongodb::{Client, Database};
+use std::io::Result;
+use utils::ChatBotLog;
 mod utils;
 
-#[get("/")]
-async fn my_test() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
+#[post("/")]
+async fn database_append(db: web::Data<Database>, data: web::Json<ChatBotLog>) -> impl Responder {
+    let collection = db.collection::<ChatBotLog>("messages");
+    let result = collection.insert_one(data.into_inner(), None).await;
+    match result {
+        Ok(_) => HttpResponse::Ok().body("data added"),
+        Err(_) => HttpResponse::Ok().body("failed to add data"),
+    }
 }
 
 #[actix_web::main]
 async fn main() -> Result<()> {
-    DbConn::new().map_err(|e| Error::new(Other, e))?;
-    HttpServer::new(|| App::new().service(my_test))
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await
+    let uri = dotenvy::var("MONGO").unwrap();
+    let client = Client::with_uri_str(uri).await.expect("failed to connect");
+    let db = client.database("ChatLogs");
+    println!("Server Online");
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(db.clone()))
+            .service(database_append)
+    })
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }
