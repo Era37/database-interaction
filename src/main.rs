@@ -6,7 +6,7 @@ use std::io::Result;
 use utils::ChatBotLog;
 mod utils;
 
-#[post("/")]
+#[post("/add")]
 async fn database_append(db: web::Data<Database>, data: web::Json<ChatBotLog>) -> impl Responder {
     let collection = db.collection::<ChatBotLog>("messages");
     let result = collection.insert_one(data.into_inner(), None).await;
